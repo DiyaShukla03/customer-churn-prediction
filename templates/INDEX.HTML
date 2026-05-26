@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Churn Prediction System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            padding: 30px 0 20px;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            color: #4a0080;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            border-bottom: 2px solid #764ba2;
+            padding-bottom: 10px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+            font-size: 0.9em;
+        }
+        
+        input, select {
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+        
+        input:focus, select:focus {
+            border-color: #764ba2;
+        }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .checkbox-item label {
+            cursor: pointer;
+            margin: 0;
+            font-size: 0.95em;
+        }
+        
+        .btn-predict {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            opacity: 0.95;
+        }
+        
+        .btn-predict:active { transform: translateY(0); }
+        
+        .result-box {
+            display: none;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .result-churn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+        
+        .result-no-churn {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+        
+        .result-icon { font-size: 4em; margin-bottom: 15px; }
+        
+        .result-title {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .result-subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .probability-bar-container {
+            background: rgba(255,255,255,0.3);
+            border-radius: 50px;
+            height: 20px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .probability-bar {
+            height: 100%;
+            border-radius: 50px;
+            background: white;
+            transition: width 1s ease-in-out;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        
+        .recommendation-box {
+            background: rgba(255,255,255,0.2);
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+        
+        .plots-section {
+            margin-top: 20px;
+        }
+        
+        .plots-section img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .model-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .model-option {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .model-option.selected {
+            border-color: #764ba2;
+            background: #f0e6ff;
+        }
+        
+        .model-option input { display: none; }
+        
+        .model-option .model-name { font-weight: 700; color: #4a0080; }
+        .model-option .model-desc { font-size: 0.8em; color: #666; }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: white;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .api-docs {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            overflow-x: auto;
+        }
+        
+        .api-docs .endpoint { color: #569cd6; }
+        .api-docs .method-post { color: #ce9178; }
+        .api-docs .method-get { color: #4ec9b0; }
+        
+        footer {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            padding: 20px;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.8em; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .model-selector { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- HEADER -->
+        <header>
+            <h1>🔮 Customer Churn Predictor</h1>
+            <p>ML-Powered System using Logistic Regression & Random Forest</p>
+        </header>
+
+        <!-- RESULT BOX (shown after prediction) -->
+        <div id="resultBox" class="result-box">
+            <div class="result-icon" id="resultIcon">🔮</div>
+            <div class="result-title" id="resultTitle">Loading...</div>
+            <div class="result-subtitle" id="resultSubtitle"></div>
+            
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="churnProb">-</div>
+                    <div class="stat-label">Churn Probability</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="riskLevel">-</div>
+                    <div class="stat-label">Risk Level</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="modelUsed">-</div>
+                    <div class="stat-label">Model Used</div>
+                </div>
+            </div>
+            
+            <div>
+                <p style="margin-bottom:8px; font-weight:600;">Churn Probability</p>
+                <div class="probability-bar-container">
+                    <div class="probability-bar" id="probBar"></div>
+                </div>
+            </div>
+            
+            <div class="recommendation-box">
+                💡 <strong>Recommendation:</strong>
+                <span id="recommendation">-</span>
+            </div>
+        </div>
+
+        <!-- LOADING -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing customer data...</p>
+        </div>
+
+        <!-- PREDICTION FORM -->
+        <div class="card">
+            <h2>📋 Customer Information</h2>
+            
+            <!-- Model Selection -->
+            <h3 style="color:#555; margin-bottom:10px;">Select Model:</h3>
+            <div class="model-selector">
+                <label class="model-option selected" onclick="selectModel(this, 'random_forest')">
+                    <input type="radio" name="model" value="random_forest" checked>
+                    <div class="model-name">🌲 Random Forest</div>
+                    <div class="model-desc">Higher accuracy, handles complex patterns</div>
+                </label>
+                <label class="model-option" onclick="selectModel(this, 'logistic_regression')">
+                    <input type="radio" name="model" value="logistic_regression">
+                    <div class="model-name">📈 Logistic Regression</div>
+                    <div class="model-desc">Fast, interpretable, baseline model</div>
+                </label>
+            </div>
+            
+            <form id="predictionForm">
+                <!-- Basic Info -->
+                <h3 style="color:#555; margin-bottom:15px;">👤 Basic Information</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Age</label>
+                        <input type="number" id="age" value="35" min="18" max="90" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tenure (months)</label>
+                        <input type="number" id="tenure" value="12" min="0" max="120" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Monthly Charges ($)</label>
+                        <input type="number" id="monthly_charges" value="65" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Charges ($)</label>
+                        <input type="number" id="total_charges" value="780" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Number of Products</label>
+                        <input type="number" id="num_products" value="2" min="1" max="10" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Support Calls</label>
+                        <input type="number" id="support_calls" value="2" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Late Payments</label>
+                        <input type="number" id="late_payments" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Contract Type</label>
+                        <select id="contract_type">
+                            <option value="Month-to-Month">Month-to-Month</option>
+                            <option value="One Year">One Year</option>
+                            <option value="Two Year">Two Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <select id="payment_method">
+                            <option value="Electronic Check">Electronic Check</option>
+                            <option value="Mailed Check">Mailed Check</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Credit Card">Credit Card</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Checkboxes -->
+                <h3 style="color:#555; margin: 20px 0 10px;">✅ Customer Profile</h3>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="has_internet" checked>
+                        <label for="has_internet">📶 Has Internet</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="has_phone" checked>
+                        <label for="has_phone">📱 Has Phone</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="is_senior">
+                        <label for="is_senior">👴 Senior Citizen</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="has_partner" checked>
+                        <label for="has_partner">💑 Has Partner</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="has_dependents">
+                        <label for="has_dependents">👨‍👩‍👧 Has Dependents</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="paperless_billing" checked>
+                        <label for="paperless_billing">📄 Paperless Billing</label>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn-predict" onclick="predict()">
+                    🔮 PREDICT CHURN
+                </button>
+            </form>
+        </div>
+
+        <!-- PLOTS -->
+        <div class="card plots-section">
+            <h2>📊 Model Analysis & EDA</h2>
+            <p style="color:#666; margin-bottom:15px;">Visual analysis from model training</p>
+            
+            <h3 style="color:#555; margin-bottom:10px;">Exploratory Data Analysis</h3>
+            <img src="/static/plots/eda_analysis.png" alt="EDA Analysis">
+            
+            <h3 style="color:#555; margin: 20px 0 10px;">Feature Correlations</h3>
+            <img src="/static/plots/correlation_heatmap.png" alt="Correlation Heatmap">
+            
+            <h3 style="color:#555; margin: 20px 0 10px;">Model Performance</h3>
+            <img src="/static/plots/model_evaluation.png" alt="Model Evaluation">
+        </div>
+
+        <!-- API DOCS -->
+        <div class="card">
+            <h2>🔌 API Documentation</h2>
+            <div class="api-docs">
+<span class="method-get">GET</span>  <span class="endpoint">/health</span>       → Health check
+<span class="method-get">GET</span>  <span class="endpoint">/model/info</span>  → Model information
+<span class="method-post">POST</span> <span class="endpoint">/predict</span>     → Single prediction
+<span class="method-post">POST</span> <span class="endpoint">/predict/batch</span> → Batch predictions
+
+<span style="color:#6a9955">// Example API call:</span>
+curl -X POST http://localhost:5000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "age": 35, "tenure": 12,
+    "monthly_charges": 65.0, "total_charges": 780.0,
+    "num_products": 2, "support_calls": 2,
+    "late_payments": 0, "has_internet": 1,
+    "has_phone": 1, "is_senior": 0,
+    "has_partner": 1, "has_dependents": 0,
+    "paperless_billing": 1,
+    "contract_type": "Month-to-Month",
+    "payment_method": "Electronic Check",
+    "model": "random_forest"
+  }'
+            </div>
+        </div>
+        
+        <footer>
+            <p>Customer Churn Prediction System | Built with Python, Scikit-learn & Flask</p>
+        </footer>
+    </div>
+
+    <script>
+        let selectedModel = 'random_forest';
+        
+        function selectModel(element, model) {
+            document.querySelectorAll('.model-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedModel = model;
+        }
+        
+        async function predict() {
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultBox').style.display = 'none';
+            
+            // Collect form data
+            const data = {
+                age: document.getElementById('age').value,
+                tenure: document.getElementById('tenure').value,
+                monthly_charges: document.getElementById('monthly_charges').value,
+                total_charges: document.getElementById('total_charges').value,
+                num_products: document.getElementById('num_products').value,
+                support_calls: document.getElementById('support_calls').value,
+                late_payments: document.getElementById('late_payments').value,
+                contract_type: document.getElementById('contract_type').value,
+                payment_method: document.getElementById('payment_method').value,
+                has_internet: document.getElementById('has_internet').checked ? 1 : 0,
+                has_phone: document.getElementById('has_phone').checked ? 1 : 0,
+                is_senior: document.getElementById('is_senior').checked ? 1 : 0,
+                has_partner: document.getElementById('has_partner').checked ? 1 : 0,
+                has_dependents: document.getElementById('has_dependents').checked ? 1 : 0,
+                paperless_billing: document.getElementById('paperless_billing').checked ? 1 : 0,
+                model: selectedModel
+            };
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                
+                if (result.status === 'success') {
+                    displayResult(result);
+                } else {
+                    alert('Error: ' + result.message);
+                }
+                
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                alert('Connection error: ' + error.message);
+            }
+        }
+        
+        function displayResult(result) {
+            const box = document.getElementById('resultBox');
+            
+            // Set colors based on prediction
+            box.className = 'result-box ' + (result.will_churn ? 'result-churn' : 'result-no-churn');
+            
+            document.getElementById('resultIcon').textContent = result.will_churn ? '⚠️' : '✅';
+            document.getElementById('resultTitle').textContent = 
+                result.will_churn ? '🚨 CUSTOMER WILL CHURN' : '✅ CUSTOMER WILL STAY';
+            document.getElementById('resultSubtitle').textContent = 
+                `Confidence: ${Math.max(result.churn_probability, result.no_churn_probability)}%`;
+            
+            document.getElementById('churnProb').textContent = result.churn_probability + '%';
+            document.getElementById('riskLevel').textContent = result.risk_level;
+            document.getElementById('modelUsed').textContent = 
+                result.model_used.replace(' ', '\n');
+            document.getElementById('recommendation').textContent = result.recommendation;
+            
+            // Animate probability bar
+            const bar = document.getElementById('probBar');
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = result.churn_probability + '%';
+            }, 100);
+            
+            box.style.display = 'block';
+            box.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
