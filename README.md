@@ -23,9 +23,3 @@ Logistic Regression and Random Forest with ~90% accuracy.
 | Logistic Regression | ~88% | ~0.93 |
 | Random Forest | ~91% | ~0.96 |
 
-## 🚀 Quick Start
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/YOUR_USERNAME/customer-churn-prediction.git
-cd customer-churn-prediction
